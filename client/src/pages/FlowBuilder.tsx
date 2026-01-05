@@ -41,7 +41,7 @@ export function FlowBuilder() {
   const [nodes, setNodes, onNodesChange] = useNodesState<Node>(initialNodes);
   const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
   const [prompt, setPrompt] = useState('');
-  const [model, setModel] = useState('google/gemini-2.0-flash-exp:free');
+  const [model, setModel] = useState('google/gemini-3-flash');
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const { token, logout, openLoginModal } = useAuth();
 

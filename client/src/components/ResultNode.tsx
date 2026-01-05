@@ -23,8 +23,11 @@ export function ResultNode({ data }: ResultNodeProps) {
   };
 
   const getModelName = (modelId?: string) => {
-    if (!modelId) return 'Gemini 2.0 Flash';
-    if (modelId.includes('gemini')) return 'Gemini 2.0 Flash';
+    if (!modelId) return 'Gemini 3 Flash';
+    if (modelId.includes('gemini-3-flash')) return 'Gemini 3 Flash';
+    if (modelId.includes('gemini-3-pro')) return 'Gemini 3 Pro';
+    if (modelId.includes('gemini-2.5')) return 'Gemini 2.5 Flash';
+    if (modelId.includes('gemini')) return 'Gemini 3 Flash';
     if (modelId.includes('mistral')) return 'Mistral 7B';
     if (modelId.includes('llama')) return 'Llama 3 8B';
     return 'AI Model';

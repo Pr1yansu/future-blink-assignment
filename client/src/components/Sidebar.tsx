@@ -92,7 +92,9 @@ export function Sidebar({ onLoadFlow, model, setModel, isOpen, onClose }: Sideba
               value={model}
               onChange={setModel}
               options={[
-                { label: 'Gemini 2.0 Flash', value: 'google/gemini-2.0-flash-exp:free', icon: <Sparkles className="w-3.5 h-3.5 text-amber-500" /> },
+                { label: 'Gemini 3 Flash', value: 'google/gemini-3-flash', icon: <Sparkles className="w-3.5 h-3.5 text-amber-500" /> },
+                { label: 'Gemini 3 Pro', value: 'google/gemini-3-pro', icon: <Brain className="w-3.5 h-3.5 text-indigo-500" /> },
+                { label: 'Gemini 2.5 Flash', value: 'google/gemini-2.5-flash', icon: <Zap className="w-3.5 h-3.5 text-yellow-500" /> },
                 { label: 'Mistral 7B', value: 'mistralai/mistral-7b-instruct:free', icon: <Zap className="w-3.5 h-3.5 text-purple-500" /> },
                 { label: 'Llama 3 8B', value: 'meta-llama/llama-3-8b-instruct:free', icon: <Brain className="w-3.5 h-3.5 text-blue-500" /> },
               ]}
