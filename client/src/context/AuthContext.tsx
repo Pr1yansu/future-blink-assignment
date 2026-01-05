@@ -31,7 +31,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     if (storedToken && storedUser) {
       try {
-        const decoded = jwtDecode(storedToken);
+        jwtDecode(storedToken);
         // Check expiry if needed
         setToken(storedToken);
         setUser(JSON.parse(storedUser));

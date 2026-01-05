@@ -37,8 +37,6 @@ const initialEdges = [
   { id: 'e1-2', source: '1', target: '2', animated: true, style: { stroke: '#6366f1', strokeWidth: 2 } },
 ];
 
-import { useNavigate } from 'react-router-dom';
-
 export function FlowBuilder() {
   const [nodes, setNodes, onNodesChange] = useNodesState<Node>(initialNodes);
   const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
@@ -46,7 +44,6 @@ export function FlowBuilder() {
   const [model, setModel] = useState('google/gemini-2.0-flash-exp:free');
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const { token, logout, openLoginModal } = useAuth();
-  const navigate = useNavigate();
 
   const onConnect = useCallback(
     (params: Connection) => setEdges((eds) => addEdge({ ...params, animated: true, style: { stroke: '#6366f1', strokeWidth: 2 } }, eds)),
