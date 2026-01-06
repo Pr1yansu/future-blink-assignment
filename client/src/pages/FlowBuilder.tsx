@@ -6,7 +6,7 @@ import axios from 'axios';
 import { InputNode } from '../components/InputNode';
 import { ResultNode } from '../components/ResultNode';
 import { Sidebar } from '../components/Sidebar';
-import { Play, Save, Trash2, Download, Menu, ChevronRight, Home, HelpCircle, LogIn, LogOut } from 'lucide-react';
+import { Play, Trash2, Download, Menu, ChevronRight, Home, HelpCircle, LogIn, LogOut } from 'lucide-react';
 import { Toaster, toast } from 'sonner';
 import { toPng } from 'html-to-image';
 import { Button } from '../components/Button';
