@@ -96,7 +96,7 @@ export function InputNode({ data }: InputNodeProps) {
 
       <Handle 
         type="source" 
-        position={Position.Right} 
+        position={Position.Bottom} 
         className="!w-3.5 !h-3.5 !bg-indigo-600 !border-[3px] !border-white shadow-md transition-transform hover:scale-110" 
       />
     </NodeCard>

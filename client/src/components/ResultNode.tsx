@@ -80,7 +80,7 @@ export function ResultNode({ data }: ResultNodeProps) {
       
       <Handle 
         type="target" 
-        position={Position.Left} 
+        position={Position.Top} 
         className="!w-3.5 !h-3.5 !bg-indigo-600 !border-[3px] !border-white shadow-md transition-transform hover:scale-110" 
       />
     </NodeCard>

@@ -22,13 +22,13 @@ const initialNodes = [
   {
     id: '1',
     type: 'inputNode',
-    position: { x: 100, y: 200 },
+    position: { x: 400, y: 100 },
     data: { label: 'Input', value: '' },
   },
   {
     id: '2',
     type: 'resultNode',
-    position: { x: 600, y: 150 },
+    position: { x: 400, y: 500 },
     data: { label: 'Result', result: '', isLoading: false },
   },
 ];
@@ -44,6 +44,12 @@ export function FlowBuilder() {
   const [model, setModel] = useState('google/gemini-3-flash');
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const { token, logout, openLoginModal } = useAuth();
+  
+  // Clean initialization of generation count from localStorage
+  const [generationCount, setGenerationCount] = useState(() => {
+    const saved = localStorage.getItem('generationCount');
+    return saved ? parseInt(saved, 10) : 0;
+  });
 
   const onConnect = useCallback(
     (params: Connection) => setEdges((eds) => addEdge({ ...params, animated: true, style: { stroke: '#6366f1', strokeWidth: 2 } }, eds)),
@@ -165,6 +171,16 @@ export function FlowBuilder() {
           return node;
         })
       );
+
+      // Auto-save logic
+      if (token && prompt && data) {
+        saveFlowMutation.mutate({ prompt, response: data });
+      } else if (!token) {
+        // Increment generation count for guests
+        const newCount = generationCount + 1;
+        setGenerationCount(newCount);
+        localStorage.setItem('generationCount', newCount.toString());
+      }
     },
     onError: (error) => {
       const errorMessage = error instanceof Error ? error.message : 'Error fetching response';
@@ -181,29 +197,19 @@ export function FlowBuilder() {
   });
 
   const saveFlowMutation = useMutation({
-    mutationFn: async () => {
-      if (!token) {
-        toast.error('Please login to save your flows');
-        openLoginModal();
-        throw new Error('Not authenticated');
-      }
+    mutationFn: async ({ prompt, response }: { prompt: string, response: string }) => {
+      if (!token) return;
 
-      const resultNode = nodes.find(n => n.id === '2');
-      const response = resultNode?.data.result as string;
-      if (!prompt || !response) {
-        toast.error('Nothing to save! Run the flow first.');
-        return;
-      }
       await axios.post(`${import.meta.env.VITE_API_URL}/api/save-flow`, 
         { prompt, response },
         { headers: { Authorization: `Bearer ${token}` } }
       );
     },
     onSuccess: () => {
-      toast.success('Flow saved to database!');
+      toast.success('Flow saved to history!');
     },
     onError: () => {
-      toast.error('Failed to save flow.');
+      toast.error('Failed to save flow to history.');
     },
   });
 
@@ -225,11 +231,15 @@ export function FlowBuilder() {
 
   const handleRun = () => {
     if (!prompt) return;
-    askAiMutation.mutate(prompt);
-  };
+    
+    // Guest limit check
+    if (!token && generationCount >= 2) {
+      toast.error('Guest limit reached (2/2). Please login to continue.');
+      openLoginModal();
+      return;
+    }
 
-  const handleSave = () => {
-    saveFlowMutation.mutate();
+    askAiMutation.mutate(prompt);
   };
 
   const handleClear = () => {
@@ -276,8 +286,7 @@ export function FlowBuilder() {
         { element: '#model-select', popover: { title: 'AI Model', description: 'Choose between Gemini, Mistral, or Llama for your generation.' } },
         { element: '#input-node', popover: { title: 'Input Node', description: 'Type your prompt here or use voice input.' } },
         { element: '#run-button', popover: { title: 'Run Flow', description: 'Click here to generate the AI response.' } },
-        { element: '#result-node', popover: { title: 'Result Node', description: 'The AI response will appear here. You can copy it or save the flow.' } },
-        { element: '#save-button', popover: { title: 'Save Flow', description: 'Save your current flow to the history.' } },
+        { element: '#result-node', popover: { title: 'Result Node', description: 'The AI response will appear here. It is automatically saved if you are logged in.' } },
         { element: '#download-button', popover: { title: 'Download', description: 'Download the entire flow as an image.' } },
       ]
     });
@@ -288,29 +297,31 @@ export function FlowBuilder() {
     <div className="w-screen h-screen bg-gray-50 flex flex-col overflow-hidden font-sans text-gray-900">
       <Toaster position="top-center" richColors />
       {/* Header */}
-      <div className="h-14 bg-white border-b border-gray-200 flex items-center justify-between px-4 shadow-sm z-30 relative">
-        <div className="flex items-center gap-4">
-          <Button 
-            id="sidebar-toggle"
-            onClick={() => setIsSidebarOpen(!isSidebarOpen)}
-            variant="ghost"
-            size="icon"
-            className="text-gray-500"
-          >
-            <Menu className="w-5 h-5" />
-          </Button>
-          
-          <div className="flex items-center gap-2 text-sm font-medium text-gray-500">
-            <div className="flex items-center gap-1.5 hover:text-gray-900 transition-colors cursor-pointer">
-              <Home className="w-4 h-4" />
-              <span>Home</span>
+      <div className="bg-white border-b border-gray-200 shadow-sm z-30 relative md:h-14 flex flex-col md:flex-row md:items-center justify-between px-4 py-2 md:py-0 gap-2 md:gap-0">
+        <div className="flex items-center justify-between w-full md:w-auto">
+          <div className="flex items-center gap-4">
+            <Button 
+              id="sidebar-toggle"
+              onClick={() => setIsSidebarOpen(!isSidebarOpen)}
+              variant="ghost"
+              size="icon"
+              className="text-gray-500"
+            >
+              <Menu className="w-5 h-5" />
+            </Button>
+            
+            <div className="flex items-center gap-2 text-sm font-medium text-gray-500">
+              <div className="flex items-center gap-1.5 hover:text-gray-900 transition-colors cursor-pointer">
+                <Home className="w-4 h-4" />
+                <span className="hidden sm:inline">Home</span>
+              </div>
+              <ChevronRight className="w-4 h-4 text-gray-400" />
+              <span className="text-gray-900 bg-gray-100 px-2 py-0.5 rounded-md text-xs sm:text-sm">Flow Builder</span>
             </div>
-            <ChevronRight className="w-4 h-4 text-gray-400" />
-            <span className="text-gray-900 bg-gray-100 px-2 py-0.5 rounded-md hidden md:block">Flow Builder</span>
           </div>
         </div>
 
-        <div className="flex gap-2">
+        <div className="flex items-center justify-end gap-2 w-full md:w-auto border-t md:border-t-0 pt-2 md:pt-0">
           {token ? (
             <Button
               onClick={logout}
@@ -325,11 +336,16 @@ export function FlowBuilder() {
             <Button
               onClick={openLoginModal}
               variant="ghost"
-              size="icon"
-              title="Login"
-              className="text-gray-500 hover:text-indigo-600"
+              size="sm"
+              className="text-indigo-600 hover:bg-indigo-50 gap-2 text-xs sm:text-sm"
             >
-              <LogIn className="w-5 h-5" />
+              <LogIn className="w-4 h-4" />
+              <span className="hidden sm:inline">Sign In</span>
+              {!token && (
+                <span className="ml-1 bg-gray-100 text-gray-600 px-1.5 py-0.5 rounded text-[10px]">
+                  {2 - generationCount} / 2 left
+                </span>
+              )}
             </Button>
           )}
 
@@ -338,17 +354,17 @@ export function FlowBuilder() {
             variant="ghost"
             size="icon"
             title="Start Tour"
-            className="text-gray-500 hover:text-indigo-600"
+            className="text-gray-500 hover:text-indigo-600 hidden sm:flex"
           >
             <HelpCircle className="w-5 h-5" />
           </Button>
 
-          <div className="w-px h-6 bg-gray-200 mx-1 self-center" />
+          <div className="w-px h-6 bg-gray-200 mx-1 self-center hidden sm:block" />
 
           <Button
             id="clear-button"
             onClick={handleClear}
-            variant="outline"
+            variant="ghost"
             size="icon"
             title="Clear Flow"
             className="text-gray-600"
@@ -359,39 +375,33 @@ export function FlowBuilder() {
           <Button
             id="download-button"
             onClick={downloadImage}
-            variant="outline"
+            variant="ghost"
             size="icon"
             title="Download as Image"
             className="text-gray-600"
           >
             <Download className="w-4 h-4" />
           </Button>
-
-          <div className="w-px h-6 bg-gray-200 mx-1 self-center" />
-
-          <Button
-            id="save-button"
-            onClick={handleSave}
-            disabled={saveFlowMutation.isPending}
-            isLoading={saveFlowMutation.isPending}
-            leftIcon={<Save className="w-4 h-4" />}
-            variant="outline"
-          >
-            <span className="hidden md:inline">Save</span>
-          </Button>
-
-          <Button
+          
+          <Button 
             id="run-button"
-            onClick={handleRun}
-            disabled={askAiMutation.isPending || !prompt}
-            isLoading={askAiMutation.isPending}
-            leftIcon={<Play className="w-4 h-4 fill-current" />}
-            variant="outline-primary"
+            onClick={handleRun} 
+            disabled={askAiMutation.isPending || (!prompt && !token && generationCount >= 2)}
+            className="bg-indigo-600 hover:bg-indigo-700 text-white shadow-indigo-200 shadow-lg min-w-[80px] gap-1.5 text-xs sm:text-sm ml-2"
           >
-            <span className="hidden md:inline">Run Flow</span>
+            {askAiMutation.isPending ? (
+              <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+            ) : (
+              <>
+                <Play className="w-3.5 h-3.5 fill-current" />
+                Run
+              </>
+            )}
           </Button>
         </div>
       </div>
+
+
 
       <div className="flex-1 flex overflow-hidden relative">
         {/* Mobile Backdrop */}
